@@ -3,25 +3,32 @@ title: "vite + react + storybookにlinariaを導入してみる"
 emoji: "🚀"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["vite", "react", "storybook", "linaria"]
-published: false
+published: true
 ---
 
 軽量な React 環境を構築したいモチベーションがあり、
 ゼロランタイムな CSS in JS を実現できる[linaria](https://github.com/callstack/linaria)を vite でセットアップした React 環境に導入してみたのでメモしておく。
+(なお、後述の通り特別な手順などは必要なく、かなり簡単にセットアップできた)
 
-なお、linaria それ自体の詳細な説明やその他の css ライブラリとの比較などについては特に触れない。
+なお、linaria それ自体の詳細な説明やその他の css ライブラリとの比較などについてはここでは特に触れない。
 
 ## 0. 試行時の環境および各主要ライブラリのバージョン
 
-特に主要な使用ライブラリのバージョンが上がるとセットアップ方法が変わってくることが多いので
+特に主要な使用ライブラリのバージョンが上がるとセットアップ方法が変わってくることが多いので、
+再現性のため一応メモしておく
 
-- Linux(Fedora38)
+- OS: Linux(Fedora38)
+  - アーキテクチャ: x86_64
 - Node.js v18.16.0
   - パッケージマネージャー: pnpm@8.6.1
 - vite@4.3.9
 - React@18.2.0
-- storybook@7.0.x
-- linaria@x
+- storybook@7.0.18
+- linaria
+  - "@linaria/babel-preset": "^4.4.5",
+  - "@linaria/core": "^4.2.10",
+  - "@linaria/react": "^4.3.8",
+  - "@linaria/vite": "^4.2.11",
 
 ## 1. vite による React 環境のセットアップ
 
@@ -162,6 +169,7 @@ export default defineConfig({
 これで linaria のセットアップは完了している。
 
 確認のため、`src/App.tsx`の中身を適当にいじってみる。
+(linaria の記載方法は[公式リポジトリの Syntax](https://github.com/callstack/linaria#syntax)などを参照)
 
 ```diff:src/App.tsx
 import { useState } from 'react'
@@ -184,7 +192,7 @@ function App() {
         </a>
       </div>
 -     <h1>Vite + React</h1>
-+     <h1 className={css`font-weight: bold; color: blue;`}>
++     <h1 className={css`color: blue;`}>
 +       Vite + React
 +     </h1>
       <div className="card">
@@ -216,6 +224,236 @@ before:
 after:
 ![react-after](https://storage.googleapis.com/zenn-user-upload/233e5c5d3b75-20230605.png)
 
+なお、余談だが vscode を使う場合`styled-components`や`emotion`と同様に、
+[vscode-styled-components](https://marketplace.visualstudio.com/items?itemName=styled-components.vscode-styled-components)を使うと syntax highlight を効かせたり良い感じに補完を有効化出来たりする。
+
 ## 2. storybook における linaria の有効化
 
-storybook@7 で有効化を行う
+storybook@7.0.xをインストールし、そこで linaria を有効化する。
+
+まずは storybook のインストールを行う。
+
+```bash
+# package.jsonがある場所で以下を実行
+pnpm dlx storybook@latest init
+
+# 自動でパッケージをインストールするか聞かれるので'Y'を選択する
+```
+
+ここで、React を使っていること及び vite を bundler に使っていることを自動検知してセットアップしてくれる。
+
+storybook の起動およびビルドは以下のようにしてできる
+
+```bash
+# 起動
+pnpm storybook
+
+# 静的アセットのビルド
+pnpm build-storybook
+# →storybook-staticにアセットが格納
+```
+
+なお、storybook のビルドを行う場合は`.gitignore`に`storybook-static`を追記しておくと良い。
+
+```diff:.gitignore
++ storybook-static
+```
+
+ここまででファイル構成は以下のような感じになっている：
+
+```sh
+tree --gitignore -a -C -I '.git'
+# .
+# ├── .eslintrc.cjs
+# ├── .gitignore
+# ├── .storybook # ★追加
+# │   ├── main.ts
+# │   └── preview.ts
+# ├── index.html
+# ├── package.json
+# ├── pnpm-lock.yaml
+# ├── public
+# │   └── vite.svg
+# ├── src
+# │   ├── App.css
+# │   ├── App.tsx
+# │   ├── assets
+# │   │   └── react.svg
+# │   ├── index.css
+# │   ├── main.tsx
+# │   ├── stories # ★追加
+# │   │   ├── Button.stories.ts
+# │   │   ├── Button.tsx
+# │   │   ├── Header.stories.ts
+# │   │   ├── Header.tsx
+# │   │   ├── Introduction.mdx
+# │   │   ├── Page.stories.ts
+# │   │   ├── Page.tsx
+# │   │   ├── assets
+# │   │   │   ├── code-brackets.svg
+# │   │   │   ├── colors.svg
+# │   │   │   ├── comments.svg
+# │   │   │   ├── direction.svg
+# │   │   │   ├── flow.svg
+# │   │   │   ├── plugin.svg
+# │   │   │   ├── repo.svg
+# │   │   │   └── stackalt.svg
+# │   │   ├── button.css
+# │   │   ├── header.css
+# │   │   └── page.css
+# │   └── vite-env.d.ts
+# ├── tsconfig.json
+# ├── tsconfig.node.json
+# └── vite.config.ts
+#
+# 7 directories, 35 files
+```
+
+また、再現性のため、パッケージが自動インストールされて更新された`package.json`も掲載しておく:
+
+```json:package.json
+{
+  "name": "linaria-sample",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@linaria/babel-preset": "^4.4.5",
+    "@linaria/core": "^4.2.10",
+    "@linaria/react": "^4.3.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@linaria/vite": "^4.2.11",
+    "@storybook/addon-essentials": "^7.0.18",
+    "@storybook/addon-interactions": "^7.0.18",
+    "@storybook/addon-links": "^7.0.18",
+    "@storybook/blocks": "^7.0.18",
+    "@storybook/react": "^7.0.18",
+    "@storybook/react-vite": "^7.0.18",
+    "@storybook/testing-library": "^0.0.14-next.2",
+    "@types/react": "^18.2.8",
+    "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "eslint": "^8.42.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.1",
+    "eslint-plugin-storybook": "^0.6.12",
+    "prop-types": "^15.8.1",
+    "storybook": "^7.0.18",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.9"
+  }
+}
+```
+
+storybook でも`linaria`が使えることを確認するため、`src/stories/Page.tsx`を適当に編集してみる
+
+```diff:src/stories/Page.tsx
+import React from 'react';
++ import { css } from '@linaria/core';
+
+import { Header } from './Header';
+import './page.css';
+
+type User = {
+  name: string;
+};
+
+export const Page: React.FC = () => {
+  const [user, setUser] = React.useState<User>();
+
+  return (
+    <article>
+      <Header
+        user={user}
+        onLogin={() => setUser({ name: 'Jane Doe' })}
+        onLogout={() => setUser(undefined)}
+        onCreateAccount={() => setUser({ name: 'Jane Doe' })}
+      />
+
+      <section className="storybook-page">
+-       <h2>Pages in Storybook</h2>
++       <h2 className={css`color: green;`}>
++         Pages in Storybook
++       </h2>
+-       <p>
++       <p className={css`font-weight: bold;`}>
+          We recommend building UIs with a{' '}
+          <a href="https://componentdriven.org" target="_blank" rel="noopener noreferrer">
+            <strong>component-driven</strong>
+          </a>{' '}
+          process starting with atomic components and ending with pages.
+        </p>
+        <p>
+          Render pages with mock data. This makes it easy to build and review page states without
+          needing to navigate to them in your app. Here are some handy patterns for managing page
+          data in Storybook:
+        </p>
+        <ul>
+          <li>
+            Use a higher-level connected component. Storybook helps you compose such data from the
+            "args" of child component stories
+          </li>
+          <li>
+            Assemble data in the page component from your services. You can mock these services out
+            using Storybook.
+          </li>
+        </ul>
+        <p>
+          Get a guided tutorial on component-driven development at{' '}
+          <a href="https://storybook.js.org/tutorials/" target="_blank" rel="noopener noreferrer">
+            Storybook tutorials
+          </a>
+          . Read more in the{' '}
+          <a href="https://storybook.js.org/docs" target="_blank" rel="noopener noreferrer">
+            docs
+          </a>
+          .
+        </p>
+        <div className="tip-wrapper">
+          <span className="tip">Tip</span> Adjust the width of the canvas with the{' '}
+          <svg width="10" height="10" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" fillRule="evenodd">
+              <path
+                d="M1.5 5.2h4.8c.3 0 .5.2.5.4v5.1c-.1.2-.3.3-.4.3H1.4a.5.5 0 01-.5-.4V5.7c0-.3.2-.5.5-.5zm0-2.1h6.9c.3 0 .5.2.5.4v7a.5.5 0 01-1 0V4H1.5a.5.5 0 010-1zm0-2.1h9c.3 0 .5.2.5.4v9.1a.5.5 0 01-1 0V2H1.5a.5.5 0 010-1zm4.3 5.2H2V10h3.8V6.2z"
+                id="a"
+                fill="#999"
+              />
+            </g>
+          </svg>
+          Viewports addon in the toolbar
+        </div>
+      </section>
+    </article>
+  );
+};
+```
+
+h2 タグの色を緑に変えたり、適当な段落を太字にしていたりする。
+
+`pnpm storybook`および、`pnpm build-storybook`によって storybook でも linaria によって style が確かに変更されている様子を確認できる。
+
+before:
+![storybook-before](https://storage.googleapis.com/zenn-user-upload/02d98813ab23-20230606.png)
+
+after:
+![storybook-after](https://storage.googleapis.com/zenn-user-upload/0779fc9c0792-20230606.png)
+
+特別な設定を行うことなく、storybook でも`linaria`を使えることが確認できた。
+
+## 感想と補足など
+
+storybook の設定の際、数週間前にやったときは色々設定を頑張った記憶があったのだが、
+勘違いだったのかやり直すと追加設定ゼロで動いてびっくりした。ラッキーだが謎。
