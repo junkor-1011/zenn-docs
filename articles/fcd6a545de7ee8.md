@@ -11,13 +11,17 @@ published: false
 
 なお、linaria それ自体の詳細な説明やその他の css ライブラリとの比較などについては特に触れない。
 
-## 0. 試行時の環境および各ライブラリのバージョンについて
+## 0. 試行時の環境および各主要ライブラリのバージョン
 
-特に主要な使用ライブラリのバージョンが上がるとセットアップ方法が変わってくることが多いので:
+特に主要な使用ライブラリのバージョンが上がるとセットアップ方法が変わってくることが多いので
 
 - Linux(Fedora38)
 - Node.js v18.16.0
   - パッケージマネージャー: pnpm@8.6.1
+- vite@4.3.9
+- React@18.2.0
+- storybook@7.0.x
+- linaria@x
 
 ## 1. vite による React 環境のセットアップ
 
@@ -112,3 +116,106 @@ pnpm dev
 pnpm build
 # →dist以下にアセットが格納される
 ```
+
+## 2. linaria のインストール
+
+[公式リポジトリ](https://github.com/callstack/linaria)にインストール方法が記述されているため、その通りにやれば OK
+
+まずは構成に関わらず`@linaria/core`, `@linaria/react`, `@linaria/babel-preset`が必須なのでこれらをインストールする。
+
+```bash
+pnpm add @linaria/{core,react,babel-preset}
+# dependencies:
+# + @linaria/babel-preset 4.4.5
+# + @linaria/core 4.2.10
+# + @linaria/react 4.3.8
+```
+
+後は使用する bundler やフレームワークに合わせてオプションでインストール、セットアップが必要、といった感じ。
+
+今回は`vite`を使うので[BUNDLERS_INTEGRATION - vite](https://github.com/callstack/linaria/blob/master/docs/BUNDLERS_INTEGRATION.md#vite)を参照し、vite 用のプラグインをインストールする。
+
+```bash
+# vite用プラグインのインストール
+pnpm add -D @linaria/vite
+# devDependencies:
+# + @linaria/vite 4.2.11
+```
+
+また、`vite.config.ts`を編集して linaria 用プラグインを有効にする。
+
+```diff:vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
++ import linaria from '@linaria/vite'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+- plugins: [react()],
++ plugins: [
++   react(),
++   linaria(),
++ ],
+})
+```
+
+これで linaria のセットアップは完了している。
+
+確認のため、`src/App.tsx`の中身を適当にいじってみる。
+
+```diff:src/App.tsx
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
++ import { css } from '@linaria/core'
+import './App.css'
+
+function App() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <>
+      <div>
+        <a href="https://vitejs.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
+      </div>
+-     <h1>Vite + React</h1>
++     <h1 className={css`font-weight: bold; color: blue;`}>
++       Vite + React
++     </h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
+}
+
+export default App
+```
+
+上記の例では h1 タグの色を青に変えている。
+
+`pnpm dev`および、`pnpm build`をそれぞれ行うことで、
+確かに linaria によって色を変えられていることを確認できる。
+
+before:
+![react-before](https://storage.googleapis.com/zenn-user-upload/74eb27457e7b-20230605.png)
+
+after:
+![react-after](https://storage.googleapis.com/zenn-user-upload/233e5c5d3b75-20230605.png)
+
+## 2. storybook における linaria の有効化
+
+storybook@7 で有効化を行う
