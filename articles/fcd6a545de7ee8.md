@@ -460,22 +460,10 @@ storybook の設定の際、数週間前にやったときは色々設定を頑�
 
 ## (追記)
 
-本記事の手順で出来たものを
+本記事の手順で出来たもの(に後述の通り本質的でない微修正を加えたもの)を
 
-https://github.com/junkor-1011/vite-react-linaria-sample/tree/zenn_2023-06-06_2
+https://github.com/junkor-1011/vite-react-linaria-sample/tree/zenn_2023-06-06_3
 
-に格納した。
+に格納している。
 
-なお、storybook を導入すると`pnpm create vite`の設定にそぐわないファイルが生成されるため`pnpm build`がそのままだと通らなくなっているので注意。
-(`tsc`コマンドで失敗するようになる)
-
-実際に開発を行うときには自動生成された`src/stories/*.tsx`を修正するか、あるいはこれらのファイルを消してしまうかなどするのが良い。
-
-単に今回の例を動かすだけなら、`tsc`が通らない原因が storybook のサンプルコードのみにあることが分かっているので、
-
-```bash
-# npm-scriptの`build`の中身は`tsc && vite build`なので、後者だけ実行する
-pnpm vite build # ←tscによる型チェックをスキップしてビルドする
-```
-
-のようにする回避策もある。
+(※そのままだと storybook を導入した際に自動生成されるサンプルが`pnpm create vite`で立ち上げた設定と合っていないために`tsc`でエラーが起こってビルド出来ないため、その辺も微修正している)
