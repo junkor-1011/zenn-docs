@@ -13,11 +13,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "zenn-cli": "^0.1.141"
+    "zenn-cli": "^0.1.143"
   },
   "devDependencies": {
-    "lint-staged": "^13.2.0",
-    "prettier": "^2.8.7",
-    "husky": "^8.0.0"
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.2",
+    "prettier": "^2.8.8"
   }
 }
