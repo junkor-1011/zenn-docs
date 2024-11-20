@@ -2,7 +2,7 @@
 title: "[AWS CDK]L2コンストラクタを自作してuvでパッケージ管理をしているLambda/LambdaLayersをデプロイする"
 emoji: "👷"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["awscdk", "aws", "uv", "python"]
+topics: ["awscdk", "aws", "uv", "python", "lambda"]
 published: true
 ---
 
