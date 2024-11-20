@@ -6,6 +6,8 @@ topics: ["awscdk", "aws", "uv", "python"]
 published: true
 ---
 
+※検証時のuvのバージョンは[0.5.2](https://github.com/astral-sh/uv/releases/tag/0.5.2)
+
 標準ライブラリや`boto3`など、Lambdaに標準で組み込まれているものではない3rdパーティーライブラリを含めたPython Lambdaをデプロイしたいことがある。
 cdkだと
 
@@ -212,6 +214,18 @@ export class CdkAppStack extends cdk.Stack {
 呼び出し元からはuv周りの複雑な処理を意識しないで済むようにできる。
 
 ## 解説
+
+## (検証環境について)
+
+- OS: Linux x86_64(WSL2)
+  - Fedora41
+- uv: v0.5.2
+
+その他、細かいライブラリのバージョン情報などは
+
+https://github.com/junkor-1011/cdk-uv-lambda-bundle-example/tree/zenn_20241119
+
+のリポジトリの内容を参照のこと
 
 ### Lambdaにおける3rdパーティーライブラリへのパスの通し方
 
